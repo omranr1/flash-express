@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: flash-express-api
+    runtime: node
+    region: frankfurt
+    plan: free
+    buildCommand: npm install --no-audit --no-fund && npm run db:generate && npm run api:build
+    startCommand: npm --workspace @flash/api run start
+    healthCheckPath: /api/auth/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://flashexpress.ly,https://www.flashexpress.ly

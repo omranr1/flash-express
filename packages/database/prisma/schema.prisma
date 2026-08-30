@@ -1,0 +1,408 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+  STAFF
+}
+
+enum OrderStatus {
+  DRAFT
+  NEW
+  WAITING_FOR_PRICING
+  PENDING_PAYMENT
+  PAID
+  PURCHASING
+  PURCHASED
+  AT_WAREHOUSE
+  READY_TO_SHIP
+  SHIPPED
+  ARRIVED_IN_LIBYA
+  READY_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REJECTED
+}
+
+enum WalletTransactionType {
+  TOP_UP
+  WITHDRAWAL
+  ORDER_CHARGE
+  REFUND
+  ADJUSTMENT
+}
+
+enum WalletTransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum RequestStatus {
+  NEW
+  WAITING_FOR_PRICING
+  PRICED
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  phone        String        @unique @db.VarChar(30)
+  name         String?       @db.VarChar(120)
+  role         UserRole      @default(CUSTOMER)
+  isVerified   Boolean       @default(false)
+  isActive     Boolean       @default(true)
+  deletedAt    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  customer     Customer?
+  wallet       Wallet?
+  orders       Order[]
+  requests     WebsiteOrderRequest[]
+  auditLogs    AuditLog[]
+  notifications Notification[]
+  chats        Chat[]
+
+  @@index([role, isActive])
+  @@index([createdAt])
+}
+
+model Customer {
+  id          String            @id @default(uuid()) @db.Uuid
+  userId      String            @unique @db.Uuid
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone       String            @db.VarChar(30)
+  defaultCity String?           @db.VarChar(80)
+  addresses   CustomerAddress[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
+
+  @@index([defaultCity])
+}
+
+model CustomerAddress {
+  id         String   @id @default(uuid()) @db.Uuid
+  customerId String   @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label      String   @db.VarChar(50)
+  city       String   @db.VarChar(80)
+  address    String   @db.VarChar(300)
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([customerId, isDefault])
+}
+
+model Wallet {
+  id           String              @id @default(uuid()) @db.Uuid
+  userId       String              @unique @db.Uuid
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance      Decimal             @default(0) @db.Decimal(18, 3)
+  currency     String              @default("LYD") @db.VarChar(3)
+  transactions WalletTransaction[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([currency])
+}
+
+model WalletTransaction {
+  id             String                   @id @default(uuid()) @db.Uuid
+  walletId       String                   @db.Uuid
+  wallet         Wallet                   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type           WalletTransactionType
+  status         WalletTransactionStatus  @default(COMPLETED)
+  amount         Decimal                  @db.Decimal(18, 3)
+  balanceBefore  Decimal                  @db.Decimal(18, 3)
+  balanceAfter   Decimal                  @db.Decimal(18, 3)
+  reference      String                   @unique @db.VarChar(120)
+  reason         String?                  @db.VarChar(300)
+  createdAt      DateTime                 @default(now())
+
+  @@index([walletId, createdAt])
+  @@index([type, status])
+}
+
+model Order {
+  id          String       @id @default(uuid()) @db.Uuid
+  orderNumber String       @unique @db.VarChar(30)
+  userId      String       @db.Uuid
+  user        User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status      OrderStatus  @default(NEW)
+  city        String       @db.VarChar(80)
+  address     String       @db.VarChar(300)
+  subtotal    Decimal      @db.Decimal(18, 3)
+  shippingFee Decimal      @default(0) @db.Decimal(18, 3)
+  total       Decimal      @db.Decimal(18, 3)
+  currency    String       @default("LYD") @db.VarChar(3)
+  items       OrderItem[]
+  timeline    OrderTimeline[]
+  payments    Payment[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model OrderItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String   @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(200)
+  productUrl String? @db.VarChar(1000)
+  quantity  Int      @default(1)
+  color     String?  @db.VarChar(80)
+  size      String?  @db.VarChar(80)
+  unitPrice Decimal? @db.Decimal(18, 3)
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
+
+model OrderTimeline {
+  id        String      @id @default(uuid()) @db.Uuid
+  orderId   String      @db.Uuid
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  note      String?     @db.VarChar(500)
+  createdAt DateTime    @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+model WebsiteOrderRequest {
+  id          String        @id @default(uuid()) @db.Uuid
+  requestNumber String      @unique @db.VarChar(30)
+  userId      String        @db.Uuid
+  user        User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status      RequestStatus @default(NEW)
+  city        String        @db.VarChar(80)
+  address     String        @db.VarChar(300)
+  notes       String?       @db.Text
+  items       WebsiteOrderItem[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model WebsiteOrderItem {
+  id          String              @id @default(uuid()) @db.Uuid
+  requestId   String              @db.Uuid
+  request     WebsiteOrderRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  productUrl  String              @db.VarChar(1000)
+  productName String              @db.VarChar(200)
+  quantity    Int                 @default(1)
+  color       String?             @db.VarChar(80)
+  size        String?             @db.VarChar(80)
+  imageUrl    String?             @db.VarChar(1000)
+  notes       String?             @db.Text
+  createdAt   DateTime            @default(now())
+
+  @@index([requestId])
+}
+
+model City {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(80)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  rates     ShippingRate[]
+}
+
+model ShippingRate {
+  id          String   @id @default(uuid()) @db.Uuid
+  cityId      String   @db.Uuid
+  city        City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  minWeightKg Decimal  @db.Decimal(8, 3)
+  maxWeightKg Decimal  @db.Decimal(8, 3)
+  price       Decimal  @db.Decimal(18, 3)
+  currency    String   @default("LYD") @db.VarChar(3)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([cityId, isActive])
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String   @db.VarChar(160)
+  message   String   @db.VarChar(500)
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @db.Uuid
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String   @db.VarChar(100)
+  entity     String   @db.VarChar(80)
+  entityId   String?  @db.VarChar(80)
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Category {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @unique @db.VarChar(100)
+  isActive  Boolean   @default(true)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id          String    @id @default(uuid()) @db.Uuid
+  categoryId  String?   @db.Uuid
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  name        String    @db.VarChar(200)
+  slug        String    @unique @db.VarChar(220)
+  productUrl  String?   @db.VarChar(1000)
+  imageUrl    String?   @db.VarChar(1000)
+  price       Decimal?  @db.Decimal(18, 3)
+  currency    String    @default("LYD") @db.VarChar(3)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([categoryId, isActive])
+}
+
+model Currency {
+  code      String   @id @db.VarChar(3)
+  name      String   @db.VarChar(80)
+  rateToLYD Decimal  @db.Decimal(18, 6)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id          String   @id @default(uuid()) @db.Uuid
+  orderId     String   @db.Uuid
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  amount      Decimal  @db.Decimal(18, 3)
+  currency    String   @default("LYD") @db.VarChar(3)
+  provider    String?  @db.VarChar(60)
+  reference   String?  @unique @db.VarChar(120)
+  status      String   @default("PENDING") @db.VarChar(30)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  refunds     Refund[]
+
+  @@index([orderId, status])
+}
+
+model Refund {
+  id        String   @id @default(uuid()) @db.Uuid
+  paymentId String   @db.Uuid
+  payment   Payment  @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  amount    Decimal  @db.Decimal(18, 3)
+  reason    String?  @db.VarChar(300)
+  status    String   @default("PENDING") @db.VarChar(30)
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(40)
+  type        String   @db.VarChar(20)
+  value       Decimal  @db.Decimal(18, 3)
+  usageLimit  Int?
+  usedCount   Int      @default(0)
+  expiresAt   DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Chat {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String        @db.Uuid
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String        @default("OPEN") @db.VarChar(20)
+  messages  ChatMessage[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  chatId    String   @db.Uuid
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  senderId  String?  @db.Uuid
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([chatId, createdAt])
+}
+
+model File {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @db.Uuid
+  storageKey String  @unique @db.VarChar(500)
+  url       String   @db.VarChar(1000)
+  mimeType  String   @db.VarChar(100)
+  sizeBytes Int
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique @db.VarChar(100)
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique @db.VarChar(60)
+  description String?  @db.VarChar(200)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  permissions RolePermission[]
+}
+
+model Permission {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique @db.VarChar(100)
+  createdAt DateTime @default(now())
+  roles     RolePermission[]
+}
+
+model RolePermission {
+  roleId       String     @db.Uuid
+  permissionId String     @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}

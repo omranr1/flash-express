@@ -1,0 +1,12 @@
+{
+  "name": "@flash/api",
+  "private": true,
+  "type": "commonjs",
+  "version": "0.1.0",
+  "scripts": {"dev": "nest start --watch", "build": "nest build", "start": "node dist/main.js", "type-check": "tsc --noEmit"},
+  "dependencies": {
+    "@nestjs/common": "latest", "@nestjs/core": "latest", "@nestjs/jwt": "latest", "@nestjs/platform-express": "latest",
+    "@prisma/client": "7.9.1", "@prisma/adapter-pg": "7.9.1", "class-transformer": "latest", "class-validator": "latest", "dotenv": "latest", "pg": "latest", "reflect-metadata": "latest", "rxjs": "latest"
+  },
+  "devDependencies": {"@nestjs/cli": "latest", "@nestjs/schematics": "latest", "@nestjs/testing": "latest", "@types/express": "latest", "typescript": "latest"}
+}

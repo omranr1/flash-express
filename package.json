@@ -1,0 +1,36 @@
+{
+  "name": "flash-express",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "type-check": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "db:generate": "npm --workspace @flash/database run db:generate",
+    "db:validate": "npm --workspace @flash/database run db:validate",
+    "db:migrate": "npm --workspace @flash/database run db:migrate",
+    "db:deploy": "npm --workspace @flash/database run db:deploy",
+    "db:studio": "npm --workspace @flash/database run db:studio",
+    "api:dev": "npm --workspace @flash/api run dev",
+    "api:build": "npm --workspace @flash/api run build",
+    "api:type-check": "npm --workspace @flash/api run type-check"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.24",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "^5.9.3"
+  }
+}

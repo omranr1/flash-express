@@ -1,0 +1,11 @@
+{
+  "name": "FLASH Express",
+  "short_name": "FLASH",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#c8ff00",
+  "icons": [{ "src": "/logo/logo1.png", "sizes": "2000x2000", "type": "image/png" }]
+}
