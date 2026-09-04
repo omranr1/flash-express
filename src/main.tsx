@@ -70,7 +70,7 @@ const products = [
 function Icon({ children }: { children: string }) { return <span className="icon" aria-hidden="true">{children}</span> }
 
 function Header({ onNavigate }: { onNavigate: (page: Page) => void }) {
-  return <header className="topbar"><button className="brand" onClick={() => onNavigate('home')}><img src="/logo/logo4.PNG" alt="FLASH Express" /></button><div className="header-actions"><button className="avatar" aria-label="الحساب" onClick={() => onNavigate('profile')}><UserIcon /></button><button className="cart-head" aria-label="السلة" onClick={() => onNavigate('cart')}><CartIcon /></button><button className="lang">عربي</button></div></header>
+  return <header className="topbar"><button className="brand" onClick={() => onNavigate('home')} aria-label="FLASH Express"><img src="/logo4.PNG" alt="FLASH Express" /></button><div className="header-actions"><button className="avatar" aria-label="الحساب" onClick={() => onNavigate('profile')}><UserIcon /></button><button className="cart-head" aria-label="السلة" onClick={() => onNavigate('cart')}><CartIcon /></button><button className="lang">عربي</button></div></header>
 }
 
 function BottomNav({ page, onNavigate, cartCount }: { page: Page; onNavigate: (page: Page) => void; cartCount: number }) {
@@ -151,7 +151,7 @@ function Login({ onSuccess }: { onSuccess: () => void }) { const [phone, setPhon
 
 function Profile({ onNavigate }: { onNavigate: (page: Page) => void }) {
   const [editing, setEditing] = useState(false)
-  const [profile, setProfile] = useState({ name: 'حسن المستخدم', phone: '+218 92 966 3548', address: 'طرابلس، حي الأندلس' })
+  const [profile, setProfile] = useState({ name: 'زائر', phone: '—', address: 'لم تتم إضافة عنوان' })
   const [draft, setDraft] = useState(profile)
   const startEditing = () => { setDraft(profile); setEditing(true) }
   const saveProfile = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setProfile(draft); setEditing(false) }

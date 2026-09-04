@@ -28,3 +28,10 @@ body.light-mode{background:#f3f4ef;color:#141414}body.light-mode .topbar,body.li
 .bottom-nav{display:flex;position:fixed;bottom:0;right:0;left:0;height:72px;background:rgba(11,11,11,.96);border-top:1px solid #292929;z-index:20;justify-content:center;gap:clamp(20px,7vw,100px);direction:rtl}
 .bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#8d8d8d;min-width:62px}
 .bottom-nav button span{font-size:21px;line-height:1}.bottom-nav button small{font-size:10px}.bottom-nav button.active{color:var(--lime)}
+
+/* Public header: keep the real FLASH logo visible on every screen size. */
+.topbar .brand{display:flex;align-items:center;justify-content:center;width:96px;height:46px;padding:0;overflow:visible}
+.topbar .brand img{display:block;width:84px;height:36px;object-fit:contain;object-position:center;background:transparent;mix-blend-mode:normal}
+.topbar .avatar{display:grid;place-items:center;padding:0}
+.topbar .avatar .svg-icon{display:block;width:19px;height:19px}
+@media(max-width:760px){.topbar .brand{width:78px;height:36px}.topbar .brand img{width:68px;height:29px}}
