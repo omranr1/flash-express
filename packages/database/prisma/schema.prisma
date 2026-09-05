@@ -49,6 +49,10 @@ enum RequestStatus {
   NEW
   WAITING_FOR_PRICING
   PRICED
+  PENDING_PAYMENT
+  PURCHASING
+  SHIPPING
+  READY_FOR_DELIVERY
   APPROVED
   REJECTED
   COMPLETED
@@ -190,6 +194,8 @@ model WebsiteOrderRequest {
   userId      String        @db.Uuid
   user        User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   status      RequestStatus @default(NEW)
+  quotedPrice Decimal?      @db.Decimal(18, 3)
+  paymentRequested Boolean   @default(false)
   city        String        @db.VarChar(80)
   address     String        @db.VarChar(300)
   notes       String?       @db.Text

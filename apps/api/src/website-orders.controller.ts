@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common'
 import { IsInt, IsString, IsUrl, Min, ValidateNested } from 'class-validator'
 import { Type } from 'class-transformer'
 import { PrismaService } from './prisma.service'
@@ -18,4 +18,6 @@ export class WebsiteOrdersController {
   }
   @Get('my')
   async mine(@Req() request: AuthRequest) { const data = await this.prisma.websiteOrderRequest.findMany({ where: { userId: request.user!.id, deletedAt: null }, include: { items: true }, orderBy: { createdAt: 'desc' } }); return { success: true, message: 'طلباتك', data } }
+  @Patch(':id/payment-confirmation')
+  async paymentConfirmation(@Req() request: AuthRequest, @Param('id') id: string) { const owned = await this.prisma.websiteOrderRequest.findFirst({ where: { id, userId: request.user!.id, deletedAt: null } }); if (!owned) return { success: false, message: 'الطلب غير موجود', data: null }; const data = await this.prisma.websiteOrderRequest.update({ where: { id }, data: { status: 'PENDING_PAYMENT', paymentRequested: true } }); return { success: true, message: 'تم إرسال تأكيد الدفع', data } }
 }
