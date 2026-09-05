@@ -34,4 +34,6 @@ body.light-mode{background:#f3f4ef;color:#141414}body.light-mode .topbar,body.li
 .topbar .brand img{display:block;width:84px;height:36px;object-fit:contain;object-position:center;background:transparent;mix-blend-mode:normal}
 .topbar .avatar{display:grid;place-items:center;padding:0}
 .topbar .avatar .svg-icon{display:block;width:19px;height:19px}
+.product-grid:empty{display:block;border:1px dashed #292929;border-radius:15px;padding:30px;text-align:center;color:#777}
+.product-grid:empty::before{content:'لا توجد منتجات مضافة حالياً';font-size:14px}
 @media(max-width:760px){.topbar .brand{width:78px;height:36px}.topbar .brand img{width:68px;height:29px}}
