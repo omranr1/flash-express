@@ -8,6 +8,7 @@ import type { Response } from 'express'
 
 class PhoneDto { @IsString() @Matches(/^\+?[0-9 ]{8,20}$/) phone!: string }
 class VerifyDto extends PhoneDto { @IsString() @MinLength(4) code!: string }
+class AdminLoginDto { @IsString() username!: string; @IsString() @MinLength(1) password!: string }
 
 @Injectable()
 export class AuthService {
@@ -23,6 +24,12 @@ export class AuthService {
     return { success: true, message: 'تم تفعيل جلسة التطوير', data: { accessToken: this.jwt.sign({ id: user.id, role: user.role }), user } }
   }
 
+  adminLogin(username: string, password: string) {
+    if (username !== process.env.ADMIN_USERNAME || password !== process.env.ADMIN_PASSWORD) return { success: false, message: 'بيانات الإدارة غير صحيحة', data: null }
+    const accessToken = this.jwt.sign({ id: 'admin', role: 'ADMIN' })
+    return { success: true, message: 'تم تسجيل دخول الإدارة', data: { accessToken } }
+  }
+
 }
 
 @Controller('auth')
@@ -32,6 +39,7 @@ export class AuthController {
   @Post('phone-login') phoneLogin(@Body() body: PhoneDto) { return { success: true, message: 'تم إرسال رمز التحقق', data: process.env.NODE_ENV === 'production' ? null : { developmentCode: '1234', phone: body.phone } } }
   @Post('verify') async verify(@Body() body: VerifyDto, @Res({ passthrough: true }) response: Response) { const result = await this.auth.verify(body.phone, body.code); if (result.success && result.data) { response.cookie('flash_access_token', result.data.accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 1000 * 60 * 15, path: '/' }) } return result }
   @Post('dev-session') async devSession(@Res({ passthrough: true }) response: Response) { if (process.env.NODE_ENV === 'production') return { success: false, message: 'غير متاح في الإنتاج', data: null }; const result = await this.auth.developmentSession(); response.cookie('flash_access_token', result.data.accessToken, { httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 15, path: '/' }); return { ...result, data: { user: result.data.user } } }
+  @Post('admin-login') adminLogin(@Body() body: AdminLoginDto, @Res({ passthrough: true }) response: Response) { const result = this.auth.adminLogin(body.username, body.password); if (result.success && result.data) response.cookie('flash_access_token', result.data.accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 1000 * 60 * 15, path: '/' }); return result }
   @UseGuards(JwtGuard)
   @Get('me') me(@Req() request: AuthRequest) { return { success: true, message: 'بيانات الحساب', data: request.user } }
 }

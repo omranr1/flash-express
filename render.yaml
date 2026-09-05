@@ -18,5 +18,9 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
       - key: CORS_ORIGIN
         value: https://flashexpress.ly,https://www.flashexpress.ly
