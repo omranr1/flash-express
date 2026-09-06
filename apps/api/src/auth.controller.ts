@@ -37,7 +37,7 @@ export class AuthService {
   }
 
   async currentUser(id: string) {
-    if (id === 'admin') return { id, name: 'مدير النظام', phone: '', role: 'ADMIN' }
+    if (id === 'admin') return null
     return this.prisma.user.findFirst({ where: { id, deletedAt: null, isActive: true }, select: { id: true, phone: true, name: true, role: true, isVerified: true } })
   }
 
