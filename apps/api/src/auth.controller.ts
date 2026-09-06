@@ -36,6 +36,11 @@ export class AuthService {
     return { success: true, message: 'تم تسجيل الحساب', data: { accessToken: this.jwt.sign({ id: user.id, role: user.role }), user } }
   }
 
+  async currentUser(id: string) {
+    if (id === 'admin') return { id, name: 'مدير النظام', phone: '', role: 'ADMIN' }
+    return this.prisma.user.findFirst({ where: { id, deletedAt: null, isActive: true }, select: { id: true, phone: true, name: true, role: true, isVerified: true } })
+  }
+
 }
 
 @Controller('auth')
@@ -48,5 +53,5 @@ export class AuthController {
   @Post('dev-session') async devSession(@Res({ passthrough: true }) response: Response) { if (process.env.NODE_ENV === 'production') return { success: false, message: 'غير متاح في الإنتاج', data: null }; const result = await this.auth.developmentSession(); response.cookie('flash_access_token', result.data.accessToken, { httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 15, path: '/' }); return { ...result, data: { user: result.data.user } } }
   @Post('admin-login') adminLogin(@Body() body: AdminLoginDto, @Res({ passthrough: true }) response: Response) { const result = this.auth.adminLogin(body.username, body.password); if (result.success && result.data) response.cookie('flash_access_token', result.data.accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 1000 * 60 * 15, path: '/' }); return result }
   @UseGuards(JwtGuard)
-  @Get('me') me(@Req() request: AuthRequest) { return { success: true, message: 'بيانات الحساب', data: request.user } }
+  @Get('me') async me(@Req() request: AuthRequest) { const user = await this.auth.currentUser(request.user!.id); return user ? { success: true, message: 'بيانات الحساب', data: user } : { success: false, message: 'الحساب غير موجود', data: null } }
 }
