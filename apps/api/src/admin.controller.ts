@@ -13,6 +13,7 @@ class AdminCreateRequestDto { @IsString() @Matches(/^\\+?[0-9 ]{8,20}$/) phone!:
 export class AdminController {
   constructor(private readonly prisma: PrismaService) {}
   @Get('dashboard') async dashboard() { const [customers, requests, orders] = await Promise.all([this.prisma.customer.count({ where: { deletedAt: null } }), this.prisma.websiteOrderRequest.count({ where: { deletedAt: null } }), this.prisma.order.count({ where: { deletedAt: null } })]); return { success: true, message: 'ملخص لوحة الإدارة', data: { customers, requests, orders } } }
+  @Get('customers') async customers() { const data = await this.prisma.customer.findMany({ where: { deletedAt: null, user: { deletedAt: null } }, include: { user: { select: { name: true, phone: true, isActive: true, createdAt: true } } }, orderBy: { createdAt: 'desc' } }); return { success: true, message: 'قائمة العملاء', data } }
   @Get('website-orders') async list() { const data = await this.prisma.websiteOrderRequest.findMany({ where: { deletedAt: null }, include: { user: { select: { phone: true, name: true } }, items: true }, orderBy: { createdAt: 'desc' } }); return { success: true, message: 'طلبات اطلب لي', data } }
   @Post('website-orders') async create(@Body() body: AdminCreateRequestDto) {
     const user = await this.prisma.user.upsert({ where: { phone: body.phone }, update: { name: body.name, isVerified: true }, create: { phone: body.phone, name: body.name, isVerified: true, customer: { create: { phone: body.phone } }, wallet: { create: {} } } })
