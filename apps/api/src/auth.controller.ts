@@ -27,7 +27,7 @@ export class AuthService {
   }
 
   async register(name: string, phone: string) {
-    const user = await this.prisma.user.upsert({ where: { phone }, update: { name, isVerified: true }, create: { phone, name, isVerified: true, customer: { create: { phone } }, wallet: { create: {} } }, select: { id: true, phone: true, name: true, role: true } })
+    const user = await this.prisma.user.upsert({ where: { phone }, update: { name, isActive: true }, create: { phone, name, isVerified: false, customer: { create: { phone } }, wallet: { create: {} } }, select: { id: true, phone: true, name: true, role: true, isVerified: true } })
     await this.prisma.customer.upsert({ where: { userId: user.id }, update: { phone }, create: { userId: user.id, phone } })
     await this.prisma.wallet.upsert({ where: { userId: user.id }, update: {}, create: { userId: user.id } })
     return { success: true, message: 'تم تسجيل الحساب', data: { accessToken: this.jwt.sign({ id: user.id, role: user.role }), user } }
