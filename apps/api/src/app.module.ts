@@ -4,7 +4,8 @@ import { PrismaService } from './prisma.service'
 import { AuthController, AuthService } from './auth.controller'
 import { WebsiteOrdersController } from './website-orders.controller'
 import { AdminController } from './admin.controller'
+import { NotificationsController } from './notifications.controller'
 import { JwtGuard, AdminGuard } from './auth'
 
-@Module({ imports: [JwtModule.register({ secret: process.env.JWT_SECRET || 'development-only-change-me', signOptions: { expiresIn: 900 } })], controllers: [AuthController, WebsiteOrdersController, AdminController], providers: [PrismaService, AuthService, JwtGuard, AdminGuard] })
+@Module({ imports: [JwtModule.register({ secret: process.env.JWT_SECRET || 'development-only-change-me', signOptions: { expiresIn: 900 } })], controllers: [AuthController, WebsiteOrdersController, AdminController, NotificationsController], providers: [PrismaService, AuthService, JwtGuard, AdminGuard] })
 export class AppModule {}
