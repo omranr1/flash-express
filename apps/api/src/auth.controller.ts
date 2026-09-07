@@ -20,11 +20,6 @@ export class AuthService {
     return { success: true, message: 'تم تسجيل الدخول', data: { accessToken: this.jwt.sign({ id: user.id, role: user.role }), user } }
   }
 
-  async developmentSession() {
-    const user = await this.prisma.user.upsert({ where: { phone: '+218929663548' }, update: { isVerified: true, name: 'حسن المستخدم' }, create: { phone: '+218929663548', name: 'حسن المستخدم', isVerified: true, customer: { create: { phone: '+218929663548' } }, wallet: { create: {} } }, select: { id: true, phone: true, name: true, role: true } })
-    return { success: true, message: 'تم تفعيل جلسة التطوير', data: { accessToken: this.jwt.sign({ id: user.id, role: user.role }), user } }
-  }
-
   adminLogin(username: string, password: string) {
     if (username !== process.env.ADMIN_USERNAME || password !== process.env.ADMIN_PASSWORD) return { success: false, message: 'بيانات الإدارة غير صحيحة', data: null }
     const accessToken = this.jwt.sign({ id: 'admin', role: 'ADMIN' })
@@ -52,7 +47,6 @@ export class AuthController {
   @Post('phone-login') phoneLogin(@Body() body: PhoneDto) { return { success: true, message: 'تم إرسال رمز التحقق', data: process.env.NODE_ENV === 'production' ? null : { developmentCode: '1234', phone: body.phone } } }
   @Post('register') async register(@Body() body: RegisterDto, @Res({ passthrough: true }) response: Response) { const result = await this.auth.register(body.name, body.phone); response.cookie('flash_access_token', result.data.accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 1000 * 60 * 60 * 24 * 30, path: '/' }); return result }
   @Post('verify') async verify(@Body() body: VerifyDto, @Res({ passthrough: true }) response: Response) { const result = await this.auth.verify(body.phone, body.code); if (result.success && result.data) { response.cookie('flash_access_token', result.data.accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 1000 * 60 * 15, path: '/' }) } return result }
-  @Post('dev-session') async devSession(@Res({ passthrough: true }) response: Response) { if (process.env.NODE_ENV === 'production') return { success: false, message: 'غير متاح في الإنتاج', data: null }; const result = await this.auth.developmentSession(); response.cookie('flash_access_token', result.data.accessToken, { httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 15, path: '/' }); return { ...result, data: { user: result.data.user } } }
   @Post('admin-login') adminLogin(@Body() body: AdminLoginDto, @Res({ passthrough: true }) response: Response) { const result = this.auth.adminLogin(body.username, body.password); if (result.success && result.data) response.cookie('flash_access_token', result.data.accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 1000 * 60 * 60 * 24 * 7, path: '/' }); return result }
   @UseGuards(JwtGuard)
   @Get('me') async me(@Req() request: AuthRequest) { const user = await this.auth.currentUser(request.user!.id); return user ? { success: true, message: 'بيانات الحساب', data: user } : { success: false, message: 'الحساب غير موجود', data: null } }
