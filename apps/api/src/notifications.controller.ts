@@ -1,11 +1,16 @@
-import { Controller, Get, Param, Patch, Req, UseGuards } from '@nestjs/common'
+import { Controller, Get, MessageEvent, Param, Patch, Req, Sse, UseGuards } from '@nestjs/common'
+import { Observable } from 'rxjs'
 import { PrismaService } from './prisma.service'
 import { AuthRequest, JwtGuard } from './auth'
+import { OrderEventsService } from './order-events.service'
 
 @Controller('notifications')
 @UseGuards(JwtGuard)
 export class NotificationsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly events: OrderEventsService) {}
+
+  @Sse('stream')
+  stream(@Req() request: AuthRequest): Observable<MessageEvent> { return this.events.subscribe(request.user!.id) }
 
   @Get('my')
   async mine(@Req() request: AuthRequest) {

@@ -5,7 +5,8 @@ import { AuthController, AuthService } from './auth.controller'
 import { WebsiteOrdersController } from './website-orders.controller'
 import { AdminController } from './admin.controller'
 import { NotificationsController } from './notifications.controller'
+import { OrderEventsService } from './order-events.service'
 import { JwtGuard, AdminGuard } from './auth'
 
-@Module({ imports: [JwtModule.register({ secret: process.env.JWT_SECRET || 'development-only-change-me', signOptions: { expiresIn: 900 } })], controllers: [AuthController, WebsiteOrdersController, AdminController, NotificationsController], providers: [PrismaService, AuthService, JwtGuard, AdminGuard] })
+@Module({ imports: [JwtModule.register({ secret: process.env.JWT_SECRET || 'development-only-change-me', signOptions: { expiresIn: 900 } })], controllers: [AuthController, WebsiteOrdersController, AdminController, NotificationsController], providers: [PrismaService, AuthService, JwtGuard, AdminGuard, OrderEventsService] })
 export class AppModule {}
