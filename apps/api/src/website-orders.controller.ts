@@ -19,6 +19,16 @@ export class WebsiteOrdersController {
   }
   @Get('my')
   async mine(@Req() request: AuthRequest) { const data = await this.prisma.websiteOrderRequest.findMany({ where: { userId: request.user!.id, deletedAt: null }, include: { items: true }, orderBy: { createdAt: 'desc' } }); return { success: true, message: 'طلباتك', data } }
+  @Get('summary')
+  async summary(@Req() request: AuthRequest) {
+    const [purchases, activePurchases, shipments, wallet] = await Promise.all([
+      this.prisma.websiteOrderRequest.count({ where: { userId: request.user!.id, deletedAt: null } }),
+      this.prisma.websiteOrderRequest.count({ where: { userId: request.user!.id, deletedAt: null, status: { notIn: ['COMPLETED', 'CANCELLED', 'REJECTED'] } } }),
+      this.prisma.order.count({ where: { userId: request.user!.id, deletedAt: null } }),
+      this.prisma.wallet.findUnique({ where: { userId: request.user!.id }, select: { balance: true } }),
+    ])
+    return { success: true, message: 'ملخص الحساب', data: { internationalShipments: shipments, localShipments: 0, purchases, activePurchases, walletBalance: Number(wallet?.balance || 0), points: 0 } }
+  }
   @Patch(':id/payment-confirmation')
   async paymentConfirmation(@Req() request: AuthRequest, @Param('id') id: string) { const owned = await this.prisma.websiteOrderRequest.findFirst({ where: { id, userId: request.user!.id, deletedAt: null } }); if (!owned) return { success: false, message: 'الطلب غير موجود', data: null }; const data = await this.prisma.websiteOrderRequest.update({ where: { id }, data: { status: 'PENDING_PAYMENT', paymentRequested: true } }); this.events.emit(request.user!.id, { type: 'order-updated', orderId: id, status: 'PENDING_PAYMENT' }); return { success: true, message: 'تم إرسال تأكيد الدفع', data } }
 }
