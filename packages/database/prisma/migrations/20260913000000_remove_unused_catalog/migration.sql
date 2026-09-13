@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS "Product";
+DROP TABLE IF EXISTS "Category";

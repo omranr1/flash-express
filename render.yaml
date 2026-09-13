@@ -4,7 +4,7 @@ services:
     runtime: node
     region: frankfurt
     plan: free
-    buildCommand: npm install --include=dev --no-audit --no-fund && npm run db:generate && npm run api:build
+    buildCommand: npm install --include=dev --no-audit --no-fund && npm run db:generate && npm run db:deploy && npm run api:build
     startCommand: npm --workspace @flash/api run start
     healthCheckPath: /api/auth/health
     envVars:
