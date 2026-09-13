@@ -10,5 +10,5 @@ import { OrderEventsService } from './order-events.service'
 const jwtSecret = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('JWT_SECRET is required in production') })() : 'development-only-change-me')
 import { JwtGuard, AdminGuard } from './auth'
 
-@Module({ imports: [JwtModule.register({ secret: jwtSecret, signOptions: { expiresIn: 900 } })], controllers: [AuthController, WebsiteOrdersController, AdminController, NotificationsController], providers: [PrismaService, AuthService, JwtGuard, AdminGuard, OrderEventsService] })
+@Module({ imports: [JwtModule.register({ secret: jwtSecret, signOptions: { expiresIn: 60 * 60 * 24 * 180 } })], controllers: [AuthController, WebsiteOrdersController, AdminController, NotificationsController], providers: [PrismaService, AuthService, JwtGuard, AdminGuard, OrderEventsService] })
 export class AppModule {}
