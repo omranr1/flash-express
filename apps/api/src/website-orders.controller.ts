@@ -4,8 +4,7 @@ import { Transform, Type } from 'class-transformer'
 import { PrismaService } from './prisma.service'
 import { AuthRequest, JwtGuard } from './auth'
 import { OrderEventsService } from './order-events.service'
-
-function normalizeProductUrl(value: unknown) { let url = String(value ?? '').trim().match(/https?:\/\/[^\s]+/i)?.[0] || String(value ?? '').trim(); if (!/^https?:\/\//i.test(url)) url = `https://${url}`; return url }
+import { normalizeProductUrl } from './product-url'
 class ItemDto { @Transform(({ value }) => normalizeProductUrl(value)) @IsUrl({ protocols: ['http', 'https'] }) productUrl!: string; @IsString() productName!: string; @IsInt() @Min(1) quantity!: number; @IsString() color!: string; @IsString() size!: string }
 class CreateRequestDto { @IsString() city!: string; @IsString() address!: string; @IsOptional() @IsString() notes?: string; @ValidateNested({ each: true }) @Type(() => ItemDto) items!: ItemDto[] }
 

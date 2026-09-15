@@ -5,11 +5,12 @@ import { PrismaService } from './prisma.service'
 import { AdminGuard, AuthRequest, JwtGuard } from './auth'
 import { OrderEventsService } from './order-events.service'
 import { normalizePhone } from './phone'
+import { normalizeProductUrl } from './product-url'
 
 const allowedStatuses = ['NEW', 'WAITING_FOR_PRICING', 'PRICED', 'PENDING_PAYMENT', 'PURCHASING', 'SHIPPING', 'READY_FOR_DELIVERY', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED'] as const
 const statusLabels: Record<(typeof allowedStatuses)[number], string> = { NEW: 'جديد', WAITING_FOR_PRICING: 'يحتاج تسعير', PRICED: 'يحتاج الدفع', PENDING_PAYMENT: 'بانتظار مراجعة الدفع', PURCHASING: 'جاري الشراء', SHIPPING: 'جاري الشحن', READY_FOR_DELIVERY: 'جاهز للتسليم', APPROVED: 'تمت الموافقة', REJECTED: 'مرفوض', COMPLETED: 'مكتمل', CANCELLED: 'ملغى' }
 class StatusDto { @IsString() @IsIn(allowedStatuses) status!: (typeof allowedStatuses)[number]; @IsOptional() @IsNumber() @Min(0) quotedPrice?: number }
-class AdminItemDto { @IsUrl({ protocols: ['http', 'https'] }) productUrl!: string; @IsString() productName!: string; @IsInt() @Min(1) quantity!: number; @IsOptional() @IsString() color?: string; @IsOptional() @IsString() size?: string; @IsOptional() @IsString() notes?: string }
+class AdminItemDto { @Transform(({ value }) => normalizeProductUrl(value)) @IsUrl({ protocols: ['http', 'https'] }) productUrl!: string; @IsString() productName!: string; @IsInt() @Min(1) quantity!: number; @IsOptional() @IsString() color?: string; @IsOptional() @IsString() size?: string; @IsOptional() @IsString() notes?: string }
 class AdminCreateRequestDto { @Transform(({ value }) => normalizePhone(value)) @IsString() @Matches(/^\+?[0-9]{8,15}$/) phone!: string; @IsString() name!: string; @IsString() city!: string; @IsString() address!: string; @IsOptional() @IsString() notes?: string; @ValidateNested({ each: true }) @Type(() => AdminItemDto) items!: AdminItemDto[] }
 class AdminCreateCustomerDto { @IsString() name!: string; @Transform(({ value }) => normalizePhone(value)) @IsString() @Matches(/^\+?[0-9]{8,15}$/) phone!: string }
 @Controller('admin')
