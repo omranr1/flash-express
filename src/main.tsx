@@ -7,14 +7,20 @@ type Page = 'home' | 'wallet' | 'orders' | 'international' | 'profile' | 'reques
 
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') : '/api'
 let runtimeAccessToken: string | null = null
-async function apiRequest(path: string, options: RequestInit = {}) {
-  const headers = new Headers(options.headers)
+type ApiRequestInit = RequestInit & { timeoutMs?: number }
+async function apiRequest(path: string, options: ApiRequestInit = {}) {
+  const { timeoutMs = 20000, ...requestOptions } = options
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
+  const headers = new Headers(requestOptions.headers)
   headers.set('Content-Type', 'application/json')
   if (runtimeAccessToken && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${runtimeAccessToken}`)
-  const response = await fetch(`${API_BASE}${path}`, { ...options, headers, credentials: 'include' })
-  const payload = await response.json().catch(() => null)
-  if (!response.ok) throw new Error(payload?.message || 'تعذر الاتصال بالخادم')
-  return payload
+  try {
+    const response = await fetch(`${API_BASE}${path}`, { ...requestOptions, headers, credentials: 'include', signal: requestOptions.signal || controller.signal })
+    const payload = await response.json().catch(() => null)
+    if (!response.ok) throw new Error(payload?.message || 'تعذر الاتصال بالخادم')
+    return payload
+  } finally { window.clearTimeout(timeout) }
 }
 
 function UserIcon() {
@@ -204,7 +210,7 @@ function Profile({ onNavigate, initialProfile }: { onNavigate: (page: Page) => v
   useEffect(() => { apiRequest('/auth/me').then((result) => { const user = result.data; if (user) { const saved = { name: user.name || 'بدون اسم', phone: user.phone || '—', address: 'لم تتم إضافة عنوان' }; setProfile(saved); setDraft(saved) } }).catch(() => undefined) }, [])
   const startEditing = () => { setDraft(profile); setEditing(true) }
   const saveProfile = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setProfile(draft); setEditing(false) }
-  return <main className="page profile-page"><span className="eyebrow">ACCOUNT</span><h1>الملف الشخصي</h1>{editing ? <form className="profile-edit" onSubmit={saveProfile}><div className="large-avatar"><UserIcon /></div><label>الاسم الكامل<input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} required /></label><label>رقم الهاتف<input value={draft.phone} onChange={(event) => setDraft({ ...draft, phone: event.target.value })} required dir="ltr" /></label><label>عنوان التوصيل<input value={draft.address} onChange={(event) => setDraft({ ...draft, address: event.target.value })} required /></label><div className="edit-actions"><button className="primary-btn" type="submit">حفظ التعديلات</button><button className="cancel-btn" type="button" onClick={() => setEditing(false)}>إلغاء</button></div></form> : <section className="profile-card"><div className="large-avatar"><UserIcon /></div><div><h2>{profile.name}</h2><p dir="ltr">{profile.phone}</p><small>{profile.address}</small></div><button onClick={startEditing}>تعديل ↗</button></section>}<section className="settings-list"><button onClick={() => onNavigate('favorites')}><span>♡</span> المفضلة <b>←</b></button><button onClick={() => onNavigate('notifications')}><span>♢</span> الإشعارات <b>←</b></button><button onClick={() => onNavigate('drafts')}><span>□</span> المسودات <b>←</b></button><button onClick={() => onNavigate('orders')}><span>▤</span> الطلبات <b>←</b></button><button onClick={() => onNavigate('settings')}><span>◈</span> الإعدادات <b>←</b></button><button onClick={() => onNavigate('settings')}><span>⚙</span> إعدادات الحساب <b>←</b></button><button><span>?</span> المساعدة والدعم <b>←</b></button></section><button className="logout" onClick={async () => { await apiRequest('/auth/logout', { method: 'POST' }); window.location.reload() }}>تسجيل الخروج</button></main>
+  return <main className="page profile-page"><span className="eyebrow">ACCOUNT</span><h1>الملف الشخصي</h1>{editing ? <form className="profile-edit" onSubmit={saveProfile}><div className="large-avatar"><UserIcon /></div><label>الاسم الكامل<input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} required /></label><label>رقم الهاتف<input value={draft.phone} onChange={(event) => setDraft({ ...draft, phone: event.target.value })} required dir="ltr" /></label><label>عنوان التوصيل<input value={draft.address} onChange={(event) => setDraft({ ...draft, address: event.target.value })} required /></label><div className="edit-actions"><button className="primary-btn" type="submit">حفظ التعديلات</button><button className="cancel-btn" type="button" onClick={() => setEditing(false)}>إلغاء</button></div></form> : <section className="profile-card"><div className="large-avatar"><UserIcon /></div><div><h2>{profile.name}</h2><p dir="ltr">{profile.phone}</p><small>{profile.address}</small></div><button onClick={startEditing}>تعديل ↗</button></section>}<section className="settings-list"><button onClick={() => onNavigate('favorites')}><span>♡</span> المفضلة <b>←</b></button><button onClick={() => onNavigate('notifications')}><span>♢</span> الإشعارات <b>←</b></button><button onClick={() => onNavigate('drafts')}><span>□</span> المسودات <b>←</b></button><button onClick={() => onNavigate('orders')}><span>▤</span> الطلبات <b>←</b></button><button onClick={() => onNavigate('settings')}><span>◈</span> الإعدادات <b>←</b></button><button onClick={() => onNavigate('settings')}><span>⚙</span> إعدادات الحساب <b>←</b></button><button><span>?</span> المساعدة والدعم <b>←</b></button></section><button className="logout" onClick={async () => { runtimeAccessToken = null; await apiRequest('/auth/logout', { method: 'POST' }); window.location.reload() }}>تسجيل الخروج</button></main>
 }
 
 function EntryGate({ onRegistered, onGuest }: { onRegistered: (profile: CustomerProfile) => void; onGuest: () => void }) {
@@ -226,7 +232,7 @@ function App() {
   const loggedIn = entry === 'customer'
   const navigate = (next: Page) => { if ((next === 'request' || next === 'orders' || next === 'international') && !loggedIn) { setEntry('register'); return }; setPage(next) }
   useEffect(() => { document.body.classList.toggle('light-mode', !darkMode); document.documentElement.lang = language === 'العربية' ? 'ar' : 'en'; document.documentElement.dir = language === 'العربية' ? 'rtl' : 'ltr' }, [darkMode, language])
-  useEffect(() => { if (window.location.pathname.startsWith('/admin')) return; apiRequest('/auth/me').then((result) => { if (result.success && result.data) { setCustomerProfile({ name: result.data.name || 'بدون اسم', phone: result.data.phone || '—', address: 'لم تتم إضافة عنوان' }); sessionStorage.removeItem('flash-guest'); setEntry('customer') } else throw new Error('no-session') }).catch(() => { const guest = sessionStorage.getItem('flash-guest') === 'true'; setEntry(guest ? 'guest' : 'register') }) }, [])
+  useEffect(() => { if (window.location.pathname.startsWith('/admin')) return; let cancelled = false; const checkSession = async () => { try { const result = await apiRequest('/auth/me', { timeoutMs: 12000 }); if (cancelled) return; if (result.success && result.data) { setCustomerProfile({ name: result.data.name || 'بدون اسم', phone: result.data.phone || '—', address: 'لم تتم إضافة عنوان' }); sessionStorage.removeItem('flash-guest'); setEntry('customer') } else throw new Error('no-session') } catch { if (cancelled) return; const guest = sessionStorage.getItem('flash-guest') === 'true'; setEntry(guest ? 'guest' : 'register') } }; checkSession(); return () => { cancelled = true } }, [])
   if (window.location.pathname.startsWith('/admin')) return <AdminDashboardV2 />
   if (entry === 'checking') return <main className="page auth-page"><div className="auth-card"><span className="eyebrow">FLASH EXPRESS</span><h1>جارٍ التحقق من الحساب</h1><p>لحظات ونجهز تجربتك.</p></div></main>
   if (entry === 'register') return <EntryGate onRegistered={(profile) => { setCustomerProfile(profile); setEntry('customer'); setPage('home') }} onGuest={() => { sessionStorage.setItem('flash-guest', 'true'); setEntry('guest'); setPage('home') }} />

@@ -1,12 +1,14 @@
 import { Body, Controller, Get, Injectable, Post, Res, UseGuards } from '@nestjs/common'
 import { IsString, Matches, MinLength } from 'class-validator'
+import { Transform } from 'class-transformer'
 import { JwtService } from '@nestjs/jwt'
 import { PrismaService } from './prisma.service'
 import { JwtGuard, AuthRequest } from './auth'
 import { Req } from '@nestjs/common'
 import type { Response } from 'express'
+import { normalizePhone } from './phone'
 
-class PhoneDto { @IsString() @Matches(/^\+?[0-9 ]{8,20}$/) phone!: string }
+class PhoneDto { @Transform(({ value }) => normalizePhone(value)) @IsString() @Matches(/^\+?[0-9]{8,15}$/) phone!: string }
 class RegisterDto extends PhoneDto { @IsString() @MinLength(2) name!: string }
 class VerifyDto extends PhoneDto { @IsString() @MinLength(4) code!: string }
 class AdminLoginDto { @IsString() username!: string; @IsString() @MinLength(1) password!: string }
@@ -15,6 +17,7 @@ class AdminLoginDto { @IsString() username!: string; @IsString() @MinLength(1) p
 export class AuthService {
   constructor(private readonly prisma: PrismaService, private readonly jwt: JwtService) {}
   async verify(phone: string, code: string) {
+    phone = normalizePhone(phone)
     if (process.env.NODE_ENV === 'production' || code !== '1234') return { success: false, message: 'رمز التحقق غير صحيح', data: null }
     const user = await this.prisma.user.upsert({ where: { phone }, update: { isVerified: true }, create: { phone, isVerified: true, customer: { create: { phone } }, wallet: { create: {} } }, select: { id: true, phone: true, name: true, role: true } })
     return { success: true, message: 'تم تسجيل الدخول', data: { accessToken: this.jwt.sign({ id: user.id, role: user.role }), user } }
@@ -27,6 +30,7 @@ export class AuthService {
   }
 
   async register(name: string, phone: string) {
+    phone = normalizePhone(phone)
     const user = await this.prisma.user.upsert({ where: { phone }, update: { name, isActive: true }, create: { phone, name, isVerified: false, customer: { create: { phone } }, wallet: { create: {} } }, select: { id: true, phone: true, name: true, role: true, isVerified: true } })
     await this.prisma.customer.upsert({ where: { userId: user.id }, update: { phone }, create: { userId: user.id, phone } })
     await this.prisma.wallet.upsert({ where: { userId: user.id }, update: {}, create: { userId: user.id } })
