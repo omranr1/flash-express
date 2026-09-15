@@ -37,3 +37,7 @@ body.light-mode{background:#f3f4ef;color:#141414}body.light-mode .topbar,body.li
 .product-grid:empty{display:block;border:1px dashed #292929;border-radius:15px;padding:30px;text-align:center;color:#777}
 .product-grid:empty::before{content:'لا توجد منتجات مضافة حالياً';font-size:14px}
 @media(max-width:760px){.topbar .brand{width:78px;height:36px}.topbar .brand img{width:68px;height:29px}}
+/* Keep the app viewport stable on touch devices while preserving responsive layouts. */
+html,body,#root{width:100%;max-width:100%;overflow-x:hidden}
+html,body{overscroll-behavior-x:none}
+button{touch-action:manipulation}
