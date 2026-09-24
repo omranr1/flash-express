@@ -42,3 +42,4 @@ body.light-mode{background:#f3f4ef;color:#141414}body.light-mode .topbar,body.li
 html,body,#root{width:100%;max-width:100%;overflow-x:hidden}
 html,body{overscroll-behavior-x:none}
 button{touch-action:manipulation}
+.loading-content{width:min(300px,80vw)}.loading-content img{width:min(250px,70vw);max-height:none}
