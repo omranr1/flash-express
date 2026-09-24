@@ -32,12 +32,12 @@ body.light-mode{background:#f3f4ef;color:#141414}body.light-mode .topbar,body.li
 
 /* Public header: keep the real FLASH logo visible on every screen size. */
 .topbar .brand{display:flex;align-items:center;justify-content:center;width:118px;height:50px;padding:0;overflow:visible}
-.topbar .brand img{display:block;width:104px;height:44px;object-fit:contain;object-position:center;background:transparent;mix-blend-mode:normal}
+.topbar .brand img{display:block;width:56px;height:56px;object-fit:contain;object-position:center;background:transparent;mix-blend-mode:normal}
 .topbar .avatar{display:grid;place-items:center;padding:0}
 .topbar .avatar .svg-icon{display:block;width:19px;height:19px}
 .product-grid:empty{display:block;border:1px dashed #292929;border-radius:15px;padding:30px;text-align:center;color:#777}
 .product-grid:empty::before{content:'لا توجد منتجات مضافة حالياً';font-size:14px}
-@media(max-width:760px){.topbar .brand{width:92px;height:40px}.topbar .brand img{width:82px;height:35px}}
+@media(max-width:760px){.topbar .brand{width:72px;height:40px}.topbar .brand img{width:46px;height:46px}}
 /* Keep the app viewport stable on touch devices while preserving responsive layouts. */
 html,body,#root{width:100%;max-width:100%;overflow-x:hidden}
 html,body{overscroll-behavior-x:none}

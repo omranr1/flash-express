@@ -59,7 +59,7 @@ function AdminIcon({ name }: { name: string }) {
 }
 
 function Header({ onNavigate }: { onNavigate: (page: Page) => void }) {
-  return <header className="topbar logistics-topbar"><div className="header-actions"><button className="header-icon" aria-label="الإشعارات" onClick={() => onNavigate('notifications')}><BellIcon /></button><button className="header-icon" aria-label="القائمة" onClick={() => onNavigate('profile')}><MenuIcon /></button></div><button className="brand" onClick={() => onNavigate('home')} aria-label="FLASH Express"><img src="/logo/logo4.PNG?v=2" alt="FLASH Express" /></button><button className="avatar" aria-label="الحساب" onClick={() => onNavigate('profile')}><UserIcon /></button></header>
+  return <header className="topbar logistics-topbar"><div className="header-actions"><button className="header-icon" aria-label="الإشعارات" onClick={() => onNavigate('notifications')}><BellIcon /></button><button className="header-icon" aria-label="القائمة" onClick={() => onNavigate('profile')}><MenuIcon /></button></div><button className="brand" onClick={() => onNavigate('home')} aria-label="FLASH Express"><img src="/logo/logo1.png?v=4" alt="FLASH Express" /></button><button className="avatar" aria-label="الحساب" onClick={() => onNavigate('profile')}><UserIcon /></button></header>
 }
 
 function BottomNav({ page, onNavigate }: { page: Page; onNavigate: (page: Page) => void }) {
